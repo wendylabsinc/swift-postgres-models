@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit-tests-macos:
+    name: Unit Tests (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test --filter PostgresModelsGeneratorTests
+
+  unit-tests-linux:
+    name: Unit Tests (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test --filter PostgresModelsGeneratorTests
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres_models
+          POSTGRES_PASSWORD: postgres_models
+          POSTGRES_DB: postgres_models_test
+        options: >-
+          --health-cmd "pg_isready -U postgres_models"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run integration tests
+        env:
+          PGHOST: postgres
+          PGPORT: 5432
+          PGUSER: postgres_models
+          PGPASSWORD: postgres_models
+          PGDATABASE: postgres_models_test
+        run: swift test --filter PostgresModelsIntegrationTests
