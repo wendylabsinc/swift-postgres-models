@@ -190,6 +190,212 @@ struct SQLParserTests {
         }
     }
 
+    @Test func parsesTextArrayType() throws {
+        let input = """
+            -- @query GetTags :one
+            -- @param id: UUID
+            -- @returns tags: TEXT[]
+            SELECT tags FROM items WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "[String]")
+    }
+
+    @Test func parsesOptionalTextArrayType() throws {
+        let input = """
+            -- @query GetTags :one
+            -- @param id: UUID
+            -- @returns tags: TEXT[]?
+            SELECT tags FROM items WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "[String]?")
+    }
+
+    @Test func parsesDirectStringArrayType() throws {
+        let input = """
+            -- @query GetTags :one
+            -- @param id: UUID
+            -- @returns tags: [String]
+            SELECT tags FROM items WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "[String]")
+    }
+
+    @Test func parsesInetTypeAsString() throws {
+        let input = """
+            -- @query GetHost :one
+            -- @param id: UUID
+            -- @returns ip: INET
+            SELECT ip FROM hosts WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "String")
+    }
+
+    @Test func parsesOptionalInetTypeAsOptionalString() throws {
+        let input = """
+            -- @query GetHost :one
+            -- @param id: UUID
+            -- @returns ip: INET?
+            SELECT ip FROM hosts WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "String?")
+    }
+
+    @Test func parsesMacaddrTypeAsString() throws {
+        let input = """
+            -- @query GetDevice :one
+            -- @param id: UUID
+            -- @returns mac: MACADDR
+            SELECT mac FROM devices WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "String")
+    }
+
+    @Test func parsesJsonbTypeAsString() throws {
+        let input = """
+            -- @query GetMeta :one
+            -- @param id: UUID
+            -- @returns meta: JSONB
+            SELECT meta FROM items WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "String")
+    }
+
+    @Test func parsesJsonbParamTypeAsString() throws {
+        let input = """
+            -- @query UpsertMeta :exec
+            -- @param id: UUID
+            -- @param meta: JSONB
+            UPDATE items SET meta = $2 WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].params[1].type == "String")
+    }
+
+    @Test func parsesJsonTypeAsString() throws {
+        let input = """
+            -- @query GetMeta :one
+            -- @param id: UUID
+            -- @returns meta: JSON
+            SELECT meta FROM items WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "String")
+    }
+
+    // MARK: Int64 / BIGINT tests
+
+    @Test func parsesBigintAsInt64() throws {
+        let input = """
+            -- @query GetOrder :one
+            -- @param id: BIGINT
+            -- @returns id: BIGINT, total: BIGINT
+            SELECT id, total FROM orders WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].params[0].type == "Int64")
+        #expect(result.queries[0].returns[0].type == "Int64")
+        #expect(result.queries[0].returns[1].type == "Int64")
+    }
+
+    @Test func parsesOptionalBigintAsOptionalInt64() throws {
+        let input = """
+            -- @query GetOrder :one
+            -- @param id: UUID
+            -- @returns parent_id: BIGINT?
+            SELECT parent_id FROM orders WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "Int64?")
+    }
+
+    @Test func parsesBigserialAsInt64() throws {
+        let input = """
+            -- @query GetOrder :one
+            -- @param id: UUID
+            -- @returns id: BIGSERIAL
+            SELECT id FROM orders WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "Int64")
+    }
+
+    @Test func parsesInt8AsInt64() throws {
+        let input = """
+            -- @query GetOrder :one
+            -- @param id: UUID
+            -- @returns id: INT8
+            SELECT id FROM orders WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "Int64")
+    }
+
+    // MARK: Decimal / NUMERIC tests
+
+    @Test func parsesNumericAsDecimal() throws {
+        let input = """
+            -- @query GetPrice :one
+            -- @param id: UUID
+            -- @returns price: NUMERIC
+            SELECT price FROM products WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "Decimal")
+    }
+
+    @Test func parsesNumericWithPrecisionAsDecimal() throws {
+        let input = """
+            -- @query GetPrice :one
+            -- @param id: UUID
+            -- @returns price: NUMERIC(10,2)
+            SELECT price FROM products WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "Decimal")
+    }
+
+    @Test func parsesOptionalNumericWithPrecisionAsOptionalDecimal() throws {
+        let input = """
+            -- @query GetPrice :one
+            -- @param id: UUID
+            -- @returns discount: NUMERIC(5,2)?
+            SELECT discount FROM products WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "Decimal?")
+    }
+
+    @Test func parsesDecimalTypeAsDecimal() throws {
+        let input = """
+            -- @query GetAmount :one
+            -- @param id: UUID
+            -- @returns amount: DECIMAL
+            SELECT amount FROM invoices WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "Decimal")
+    }
+
+    // MARK: Common integer alias tests
+
+    @Test func parsesIntegerAsInt() throws {
+        let input = """
+            -- @query GetCount :one
+            -- @param id: UUID
+            -- @returns count: INTEGER
+            SELECT count FROM stats WHERE id = $1;
+            """
+        let result = try SQLParser.parseQueryFile(input)
+        #expect(result.queries[0].returns[0].type == "Int")
+    }
+
     @Test func throwsOnMalformedParam() {
         let input = """
             -- @query GetUser :one

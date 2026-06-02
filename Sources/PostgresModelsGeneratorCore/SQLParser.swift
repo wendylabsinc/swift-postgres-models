@@ -1,7 +1,47 @@
 public struct SQLParser {
+    static let typeAliases: [String: String] = [
+        // Arrays
+        "TEXT[]": "[String]",    "TEXT[]?": "[String]?",
+        // Network types
+        "INET": "String",        "INET?": "String?",
+        "MACADDR": "String",     "MACADDR?": "String?",
+        // JSON types
+        "JSON": "String",        "JSON?": "String?",
+        "JSONB": "String",       "JSONB?": "String?",
+        // 64-bit integer types
+        "BIGINT": "Int64",       "BIGINT?": "Int64?",
+        "BIGSERIAL": "Int64",    "BIGSERIAL?": "Int64?",
+        "INT8": "Int64",         "INT8?": "Int64?",
+        // 32-bit integer types
+        "INTEGER": "Int",        "INTEGER?": "Int?",
+        "INT": "Int",            "INT?": "Int?",
+        "INT4": "Int",           "INT4?": "Int?",
+        "SERIAL": "Int",         "SERIAL?": "Int?",
+        "SMALLINT": "Int",       "SMALLINT?": "Int?",
+        "INT2": "Int",           "INT2?": "Int?",
+        // Decimal / numeric types (parameterized forms handled via normalization)
+        "NUMERIC": "Decimal",    "NUMERIC?": "Decimal?",
+        "DECIMAL": "Decimal",    "DECIMAL?": "Decimal?",
+        // Floating-point types
+        "FLOAT8": "Double",      "FLOAT8?": "Double?",
+        "FLOAT4": "Double",      "FLOAT4?": "Double?",
+        "REAL": "Double",        "REAL?": "Double?",
+        // String types
+        "VARCHAR": "String",     "VARCHAR?": "String?",
+        "CHAR": "String",        "CHAR?": "String?",
+        "CHARACTER VARYING": "String", "CHARACTER VARYING?": "String?",
+        // Boolean
+        "BOOLEAN": "Bool",       "BOOLEAN?": "Bool?",
+        // Timestamp types
+        "TIMESTAMP": "Date",     "TIMESTAMP?": "Date?",
+        "TIMESTAMPTZ": "Date",   "TIMESTAMPTZ?": "Date?",
+        "TIMESTAMP WITH TIME ZONE": "Date", "TIMESTAMP WITH TIME ZONE?": "Date?",
+    ]
+
     static let supportedTypes: Set<String> = [
-        "UUID", "String", "Int", "Double", "Bool", "Date",
-        "UUID?", "String?", "Int?", "Double?", "Bool?", "Date?",
+        "UUID", "String", "Int", "Int64", "Double", "Decimal", "Bool", "Date",
+        "UUID?", "String?", "Int?", "Int64?", "Double?", "Decimal?", "Bool?", "Date?",
+        "[String]", "[String]?",
     ]
 
     public static func parseQueryFile(_ contents: String) throws -> ParsedQueryFile {
@@ -110,19 +150,44 @@ public struct SQLParser {
             throw SQLParserError.malformedAnnotation(s)
         }
         let name = s[s.startIndex..<idx].trimmingCharacters(in: .whitespaces)
-        let type = s[s.index(after: idx)...].trimmingCharacters(in: .whitespaces)
-        guard !name.isEmpty, !type.isEmpty else {
+        let rawType = s[s.index(after: idx)...].trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, !rawType.isEmpty else {
             throw SQLParserError.malformedAnnotation(s)
         }
+        let normalizedType = normalizeSQLTypeName(rawType)
+        let type = typeAliases[normalizedType] ?? normalizedType
         return (name, type)
     }
 
     private static func parseReturnsList(_ s: String, queryName: String) throws -> [ParsedReturn] {
-        // Split on "," — safe because Swift types don't contain commas
-        try s.components(separatedBy: ",").map { item in
+        try splitTopLevelCommas(s).map { item in
             let (name, type) = try parseNameType(item.trimmingCharacters(in: .whitespaces), queryName: queryName)
             return ParsedReturn(name: name, type: type)
         }
+    }
+
+    /// Splits `s` on commas that are not inside parentheses, e.g. `NUMERIC(10,2)` stays intact.
+    private static func splitTopLevelCommas(_ s: String) -> [String] {
+        var result: [String] = []
+        var depth = 0
+        var current = ""
+        for ch in s {
+            if ch == "(" { depth += 1; current.append(ch) }
+            else if ch == ")" { depth -= 1; current.append(ch) }
+            else if ch == "," && depth == 0 { result.append(current); current = "" }
+            else { current.append(ch) }
+        }
+        result.append(current)
+        return result
+    }
+
+    /// Strips precision/scale modifiers from SQL type names, e.g. `NUMERIC(10,2)` → `NUMERIC`, `VARCHAR(255)?` → `VARCHAR?`.
+    private static func normalizeSQLTypeName(_ raw: String) -> String {
+        guard let parenStart = raw.firstIndex(of: "("),
+              let parenEnd = raw.lastIndex(of: ")") else {
+            return raw
+        }
+        return String(raw[raw.startIndex..<parenStart]) + String(raw[raw.index(after: parenEnd)...])
     }
 
     /// Returns the set of all `$N` placeholder indices found in `sql`.
