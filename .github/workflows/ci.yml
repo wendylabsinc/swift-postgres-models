@@ -16,7 +16,7 @@ jobs:
   unit-tests-linux:
     name: Unit Tests (Linux)
     runs-on: ubuntu-latest
-    container: swift:6.0
+    container: swift:6.2
     steps:
       - uses: actions/checkout@v4
       - run: swift test --filter PostgresModelsGeneratorTests
@@ -24,7 +24,7 @@ jobs:
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
-    container: swift:6.0
+    container: swift:6.2
     services:
       postgres:
         image: postgres:16
