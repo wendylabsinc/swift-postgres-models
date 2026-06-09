@@ -138,7 +138,13 @@ struct QueryCodeGeneratorTests {
     @Test func outputContainsRequiredImports() {
         let file = ParsedQueryFile(queries: [])
         let output = QueryCodeGenerator.generate(from: file, structName: "EmptyQueries")
-        #expect(output.contains("#if canImport(FoundationEssentials)\nimport FoundationEssentials\n#else\nimport Foundation\n#endif"))
+        let expectedImports = [
+            "#if canImport(FoundationEssentials)",
+            "import FoundationEssentials",
+            "#endif",
+            "import Foundation",
+        ].joined(separator: "\n")
+        #expect(output.contains(expectedImports))
         #expect(output.contains("import Logging"))
         #expect(output.contains("import PostgresNIO"))
     }
