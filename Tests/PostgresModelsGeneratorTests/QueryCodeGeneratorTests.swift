@@ -141,8 +141,9 @@ struct QueryCodeGeneratorTests {
         let expectedImports = [
             "#if canImport(FoundationEssentials)",
             "import FoundationEssentials",
-            "#endif",
+            "#else",
             "import Foundation",
+            "#endif",
         ].joined(separator: "\n")
         #expect(output.contains(expectedImports))
         #expect(output.contains("import Logging"))

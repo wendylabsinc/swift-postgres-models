@@ -1,7 +1,8 @@
 #if canImport(FoundationEssentials)
 import FoundationEssentials
-#endif
+#else
 import Foundation
+#endif
 import PostgresModelsGeneratorCore
 
 #if canImport(FoundationEssentials)
