@@ -1,17 +1,23 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
+#if canImport(Glibc)
+import Glibc
+#elseif canImport(Darwin)
+import Darwin
+#endif
 import PostgresModelsGeneratorCore
 
-#if os(macOS)
 func writeStandardError(_ message: String) {
-    fputs(message, stderr)
-}
-#else
-func writeStandardError(_ message: String) {
-    if let data = message.data(using: .utf8) {
-        FileHandle.standardError.write(data)
+    let bytes = Array(message.utf8)
+    bytes.withUnsafeBufferPointer { buffer in
+        if let baseAddress = buffer.baseAddress {
+            _ = write(STDERR_FILENO, baseAddress, buffer.count)
+        }
     }
 }
-#endif
 
 guard CommandLine.arguments.count >= 2 else {
     writeStandardError("Usage: PostgresModelsGenerator <output-dir> [files...]\n")
