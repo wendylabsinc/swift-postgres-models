@@ -1,11 +1,17 @@
 import Foundation
 import PostgresModelsGeneratorCore
 
+#if os(macOS)
+func writeStandardError(_ message: String) {
+    fputs(message, stderr)
+}
+#else
 func writeStandardError(_ message: String) {
     if let data = message.data(using: .utf8) {
         FileHandle.standardError.write(data)
     }
 }
+#endif
 
 guard CommandLine.arguments.count >= 2 else {
     writeStandardError("Usage: PostgresModelsGenerator <output-dir> [files...]\n")
