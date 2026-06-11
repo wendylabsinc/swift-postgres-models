@@ -6,11 +6,7 @@ import Foundation
 import PostgresModelsGeneratorCore
 
 #if canImport(FoundationEssentials)
-func writeStandardError(_ message: String) {
-    if let data = message.data(using: .utf8) {
-        FileHandle.standardError.write(data)
-    }
-}
+func writeStandardError(_ message: String) { }
 #else
 func writeStandardError(_ message: String) {
     fputs(message, stderr)
