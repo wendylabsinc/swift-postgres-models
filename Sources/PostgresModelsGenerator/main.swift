@@ -17,6 +17,12 @@ func writeStandardError(_ message: String) {
 }
 #endif
 
+#if canImport(Darwin)
+import Darwin
+#else
+import Glibc
+#endif
+
 guard CommandLine.arguments.count >= 2 else {
     writeStandardError("Usage: PostgresModelsGenerator <output-dir> [files...]\n")
     exit(1)
