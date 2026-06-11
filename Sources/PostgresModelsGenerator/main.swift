@@ -15,8 +15,12 @@ func writeStandardError(_ message: String) {
 
 #if canImport(Darwin)
 import Darwin
-#else
+#elseif canImport(Glibc)
 import Glibc
+#elseif canImport(Musl)
+import Musl
+#else
+#error("Unsupported OS")
 #endif
 
 guard CommandLine.arguments.count >= 2 else {
