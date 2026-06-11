@@ -1,8 +1,24 @@
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
 import Foundation
+#endif
 import PostgresModelsGeneratorCore
 
+#if canImport(FoundationEssentials)
+func writeStandardError(_ message: String) {
+    if let data = message.data(using: .utf8) {
+        FileHandle.standardError.write(data)
+    }
+}
+#else
+func writeStandardError(_ message: String) {
+    fputs(message, stderr)
+}
+#endif
+
 guard CommandLine.arguments.count >= 2 else {
-    fputs("Usage: PostgresModelsGenerator <output-dir> [files...]\n", stderr)
+    writeStandardError("Usage: PostgresModelsGenerator <output-dir> [files...]\n")
     exit(1)
 }
 
@@ -25,7 +41,7 @@ do {
             let structName = IdentifierSanitizer.structName(from: stem)
             let parsed = try SQLParser.parseQueryFile(contents)
             if parsed.queries.isEmpty {
-                fputs("warning: \(filename) has no @query blocks\n", stderr)
+                writeStandardError("warning: \(filename) has no @query blocks\n")
             }
             let output = QueryCodeGenerator.generate(from: parsed, structName: structName)
             try output.write(to: outputURL.appendingPathComponent("\(stem).swift"), atomically: true, encoding: .utf8)
@@ -43,24 +59,24 @@ do {
 } catch let error as SQLParserError {
     switch error {
     case .missingQueryKind(let line):
-        fputs("error: \(currentPath): missing query kind (:one, :many, :exec) — \(line)\n", stderr)
+        writeStandardError("error: \(currentPath): missing query kind (:one, :many, :exec) — \(line)\n")
     case .unknownQueryKind(let kind):
-        fputs("error: \(currentPath): unknown query kind '\(kind)' — expected :one, :many, or :exec\n", stderr)
+        writeStandardError("error: \(currentPath): unknown query kind '\(kind)' — expected :one, :many, or :exec\n")
     case .paramCountMismatch(let name, let declared, let placeholders):
-        fputs("error: \(currentPath): param count mismatch in query '\(name)': \(declared) params declared, \(placeholders) placeholders found\n", stderr)
+        writeStandardError("error: \(currentPath): param count mismatch in query '\(name)': \(declared) params declared, \(placeholders) placeholders found\n")
     case .unsupportedType(let type, let queryName):
-        fputs("error: \(currentPath): unsupported type '\(type)' in query '\(queryName)' — supported: UUID, String, Int, Double, Bool, Date (and optionals)\n", stderr)
+        writeStandardError("error: \(currentPath): unsupported type '\(type)' in query '\(queryName)' — supported: UUID, String, Int, Double, Bool, Date (and optionals)\n")
     case .missingReturns(let name):
-        fputs("error: \(currentPath): query '\(name)' is :one/:many but has no @returns\n", stderr)
+        writeStandardError("error: \(currentPath): query '\(name)' is :one/:many but has no @returns\n")
     case .multipleReturnsLines(let name):
-        fputs("error: \(currentPath): query '\(name)' has multiple @returns lines\n", stderr)
+        writeStandardError("error: \(currentPath): query '\(name)' has multiple @returns lines\n")
     case .emptySQLBody(let name):
-        fputs("error: \(currentPath): query '\(name)' has annotations but no SQL body\n", stderr)
+        writeStandardError("error: \(currentPath): query '\(name)' has annotations but no SQL body\n")
     case .malformedAnnotation(let s):
-        fputs("error: \(currentPath): malformed annotation '\(s)'\n", stderr)
+        writeStandardError("error: \(currentPath): malformed annotation '\(s)'\n")
     }
     exit(1)
 } catch {
-    fputs("error: \(currentPath.isEmpty ? "" : "\(currentPath): ")\(error)\n", stderr)
+    writeStandardError("error: \(currentPath.isEmpty ? "" : "\(currentPath): ")\(error)\n")
     exit(1)
 }
