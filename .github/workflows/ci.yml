@@ -27,7 +27,7 @@ jobs:
     container: swift:6.2
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_USER: postgres_models
           POSTGRES_PASSWORD: postgres_models
