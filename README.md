@@ -65,6 +65,19 @@ let users = try await UsersQueries.listUsers(client, logger: logger)
 try await UsersQueries.createUser(client, id: id, name: name, email: email, logger: logger)
 ```
 
+### Transactions
+
+Each generated function takes `some PostgresQueryRunner` as its first argument. Both `PostgresClient` and `PostgresConnection` conform, so you can run a single query against the pooled client (one connection per call) **or** run several queries atomically against one connection inside a transaction:
+
+```swift
+try await client.withTransaction(logger: logger) { connection in
+    try await UsersQueries.createUser(connection, id: id, name: name, email: email, logger: logger)
+    try await AccountsQueries.createAccount(connection, userId: id, logger: logger)
+}
+```
+
+Because every call inside the closure shares the same `connection`, they run in the same transaction and commit or roll back together. Passing `client` instead would lease a separate connection per call, so those calls would **not** share a transaction.
+
 ### Annotation reference
 
 | Annotation | Format | Notes |

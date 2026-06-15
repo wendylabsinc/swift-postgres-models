@@ -35,6 +35,7 @@ var currentPath = ""
 
 do {
     var migrationInputs: [(name: String, contents: String)] = []
+    var hasQueries = false
 
     for path in inputPaths {
         currentPath = path
@@ -51,9 +52,17 @@ do {
             }
             let output = QueryCodeGenerator.generate(from: parsed, structName: structName)
             try output.write(to: outputURL.appendingPathComponent("\(stem).swift"), atomically: true, encoding: .utf8)
+            hasQueries = true
         } else if filename.hasSuffix(".migration.sql") {
             migrationInputs.append((name: filename, contents: contents))
         }
+    }
+
+    // Generated query functions reference the `PostgresQueryRunner` abstraction,
+    // so emit it once whenever any query file was generated.
+    if hasQueries {
+        let runtime = RuntimeCodeGenerator.generate()
+        try runtime.write(to: outputURL.appendingPathComponent("PostgresModelsRuntime.swift"), atomically: true, encoding: .utf8)
     }
 
     if !migrationInputs.isEmpty {

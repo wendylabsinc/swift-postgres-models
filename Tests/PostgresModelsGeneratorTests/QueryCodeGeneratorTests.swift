@@ -20,9 +20,13 @@ struct QueryCodeGeneratorTests {
         let output = QueryCodeGenerator.generate(from: file, structName: "UsersQueries")
         #expect(output.contains("struct UsersQueries {"))
         #expect(output.contains("static func getUser("))
-        #expect(output.contains("_ client: PostgresClient,"))
+        #expect(output.contains("_ db: some PostgresQueryRunner,"))
         #expect(output.contains("id: UUID,"))
-        #expect(output.contains("logger: Logger"))
+        #expect(output.contains("logger: Logger,"))
+        #expect(output.contains("file: String = #fileID,"))
+        #expect(output.contains("line: Int = #line"))
+        #expect(output.contains("file: file,"))
+        #expect(output.contains("line: line"))
         #expect(output.contains("async throws -> (id: UUID, name: String)?"))
         #expect(output.contains(#"rows.decode((UUID, String).self)"#))
         #expect(output.contains("return (id: id, name: name)"))
@@ -96,7 +100,7 @@ struct QueryCodeGeneratorTests {
         let output = QueryCodeGenerator.generate(from: file, structName: "UsersQueries")
         #expect(output.contains("async throws {"))
         #expect(!output.contains("->"))
-        #expect(output.contains("try await client.query("))
+        #expect(output.contains("try await db.query("))
     }
 
     // MARK: SQL binding
