@@ -10,7 +10,7 @@ jobs:
     name: Unit Tests (macOS)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.3
       - run: swift test --filter PostgresModelsGeneratorTests
 
   unit-tests-linux:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.3
       - run: swift test --filter PostgresModelsGeneratorTests
 
   integration-tests:
@@ -38,7 +38,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.3
       - name: Run integration tests
         env:
           PGHOST: postgres
