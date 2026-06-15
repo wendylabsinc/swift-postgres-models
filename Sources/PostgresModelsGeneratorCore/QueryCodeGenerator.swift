@@ -27,11 +27,15 @@ public struct QueryCodeGenerator {
         let sql = normalizedSQL(query.sql, params: query.params)
 
         // Build parameter list lines
-        var paramLines: [String] = ["        _ client: PostgresClient,"]
+        var paramLines: [String] = ["        _ db: some PostgresQueryRunner,"]
         for p in query.params {
             paramLines.append("        \(IdentifierSanitizer.columnName(from: p.name)): \(p.type),")
         }
-        paramLines.append("        logger: Logger")
+        paramLines.append("        logger: Logger,")
+        // `file`/`line` default to the call site so PostgresNIO error metadata
+        // points at the caller, not at this generated helper.
+        paramLines.append("        file: String = #fileID,")
+        paramLines.append("        line: Int = #line")
 
         let returnClause: String
         switch query.kind {
@@ -56,9 +60,11 @@ public struct QueryCodeGenerator {
             return generateManyBody(query, sql: sql)
         case .exec:
             return [
-                "        try await client.query(",
+                "        try await db.query(",
                 "            \"\(sql)\",",
-                "            logger: logger",
+                "            logger: logger,",
+                "            file: file,",
+                "            line: line",
                 "        )",
             ]
         }
@@ -69,9 +75,11 @@ public struct QueryCodeGenerator {
         let destructure = destructureExpr(query.returns)
         let construct = constructExpr(query.returns)
         return [
-            "        let rows = try await client.query(",
+            "        let rows = try await db.query(",
             "            \"\(sql)\",",
-            "            logger: logger",
+            "            logger: logger,",
+            "            file: file,",
+            "            line: line",
             "        )",
             "        for try await \(destructure) in rows.decode(\(decodeType).self) {",
             "            return \(construct)",
@@ -87,9 +95,11 @@ public struct QueryCodeGenerator {
         let construct = constructExpr(query.returns)
         return [
             "        var results: [\(tupleType)] = []",
-            "        for try await \(destructure) in try await client.query(",
+            "        for try await \(destructure) in try await db.query(",
             "            \"\(sql)\",",
-            "            logger: logger",
+            "            logger: logger,",
+            "            file: file,",
+            "            line: line",
             "        ).decode(\(decodeType).self) {",
             "            results.append(\(construct))",
             "        }",

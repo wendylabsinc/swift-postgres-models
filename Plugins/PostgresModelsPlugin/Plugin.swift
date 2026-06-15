@@ -18,14 +18,19 @@ struct PostgresModelsPlugin: BuildToolPlugin {
 
         var outputFiles: [URL] = []
         var hasMigrations = false
+        var hasQueries = false
         for file in inputFiles {
             let name = file.url.lastPathComponent
             if name.hasSuffix(".query.sql") {
                 let stem = String(name.dropLast(".query.sql".count))
                 outputFiles.append(outputDir.appending(component: "\(stem).swift"))
+                hasQueries = true
             } else if name.hasSuffix(".migration.sql") {
                 hasMigrations = true
             }
+        }
+        if hasQueries {
+            outputFiles.append(outputDir.appending(component: "PostgresModelsRuntime.swift"))
         }
         if hasMigrations {
             outputFiles.append(outputDir.appending(component: "Migrations.swift"))
