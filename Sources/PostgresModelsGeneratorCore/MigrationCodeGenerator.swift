@@ -60,7 +60,7 @@ public struct MigrationCodeGenerator {
             "                    )",
             "                    try await conn.query(\"COMMIT\", logger: logger)",
             "                } catch {",
-            "                    try? await conn.query(\"ROLLBACK\", logger: logger)",
+            "                    _ = try? await conn.query(\"ROLLBACK\", logger: logger)",
             "                    throw error",
             "                }",
             "            }",
