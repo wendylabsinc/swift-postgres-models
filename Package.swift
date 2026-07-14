@@ -16,7 +16,41 @@ let package = Package(
             capability: .buildTool(),
             dependencies: ["PostgresModelsGenerator"]
         ),
+        .target(
+            name: "CPgQuery",
+            path: "Sources/CPgQuery",
+            exclude: [
+                "upstream/src/pg_query_outfuncs_protobuf_cpp.cc",
+                "upstream/src/include",
+                "upstream/src/postgres/include",
+            ],
+            sources: [
+                "upstream/src",
+                "upstream/vendor",
+                "upstream/protobuf/pg_query.pb-c.c",
+            ],
+            publicHeadersPath: "include",
+            cSettings: [
+                .headerSearchPath("include"),
+                .headerSearchPath("upstream"),
+                .headerSearchPath("upstream/src"),
+                .headerSearchPath("upstream/src/include"),
+                .headerSearchPath("upstream/src/postgres/include"),
+                .headerSearchPath("upstream/vendor"),
+                .headerSearchPath("upstream/vendor/protobuf-c"),
+                .headerSearchPath("upstream/protobuf"),
+                .unsafeFlags(["-w"]),
+            ]
+        ),
         .target(name: "PostgresModelsGeneratorCore"),
+        .target(
+            name: "PostgresModelsSchema",
+            dependencies: ["CPgQuery"]
+        ),
+        .testTarget(
+            name: "PostgresModelsSchemaTests",
+            dependencies: ["PostgresModelsSchema"]
+        ),
         .executableTarget(
             name: "PostgresModelsGenerator",
             dependencies: ["PostgresModelsGeneratorCore"]
@@ -30,6 +64,10 @@ let package = Package(
             dependencies: [
                 .product(name: "PostgresNIO", package: "postgres-nio"),
             ]
+        ),
+        .testTarget(
+            name: "CPgQuerySmokeTests",
+            dependencies: ["CPgQuery"]
         ),
     ]
 )

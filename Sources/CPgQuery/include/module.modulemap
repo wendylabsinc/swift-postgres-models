@@ -1,0 +1,4 @@
+module CPgQuery {
+    header "pg_query.h"
+    export *
+}

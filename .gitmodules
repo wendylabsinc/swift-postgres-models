@@ -1,0 +1,3 @@
+[submodule "Sources/CPgQuery/upstream"]
+	path = Sources/CPgQuery/upstream
+	url = https://github.com/pganalyze/libpg_query.git
